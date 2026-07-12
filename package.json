@@ -1,0 +1,22 @@
+{
+  "name": "pi-dlv-network",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@upstash/redis": "^1.38.0",
+    "axios": "^1.18.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "@vercel/node": "^5.8.23",
+    "typescript": "^7.0.2"
+  }
+}

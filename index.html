@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pi-DLV Network</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+
+</head>
+<body style="margin: 0; background-color: #121212; color: #ffffff;">
+
+<div id="vgnGatewayLock" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: #1a1a1a; padding: 20px; text-align: center;">
+        <h1 style="color: #cca01a; margin-bottom: 5px; font-weight: bold; font-family: sans-serif; font-size: 2.2em;">Pi-DLV Network</h1>
+        <p style="color: #666666; font-size: 0.8em; text-transform: uppercase; letter-spacing: 2px; margin-top: 0; margin-bottom: 25px; font-weight: bold;">
+            Powered by Vigilan Global Network Limited
+       </p>
+        <p style="color: #aaaaaa; max-width: 340px; margin: 0 auto 30px auto; font-size: 0.95em; line-height: 1.5; font-family: sans-serif;">
+            Decentralized Logistics & Verification Hub. Authenticate to sync with your local regional transit telemetry grid.
+        </p>
+       <button id="piSignInBtn" style="background: linear-gradient(135deg, #e0a904, #cca01a); color: #1a1a1a; font-weight: bold; padding: 16px 36px; border: none; border-radius: 30px; font-size: 1.1em; box-shadow: 0 4px 20px rgba(224, 169, 4, 0.3); cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;">
+            🔑 ENTER VIA PI SECURE AUTH
+       </button>
+        <p id="gatewayStatus" style="margin-top: 20px; color: #cca01a; font-size: 0.85em; font-weight: bold; font-family: sans-serif;"></p>
+   </div>
+
+   <div id="vgnMainDashboard" style="display: none;">
+        <div style="background: #1a1a1a; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a2a;">
+            <span style="font-weight: bold; color: #cca01a; letter-spacing: 0.5px; font-family: sans-serif;">🛰️ PI-DLV SYSTEM TERMINAL</span>
+            <span style="background: #2a2a2a; font-size: 0.75em; padding: 4px 8px; border-radius: 4px; color: #888; font-weight: bold;">v1.0.0</span>
+        </div>
+
+        <div style="padding: 20px; font-family: 'Segoe UI', sans-serif;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                <div style="background: #1a1a1a; padding: 15px; border-radius: 8px; border-bottom: 3px solid #cca01a; text-align: center;">
+                    <span style="color: #888; font-size: 0.8em; text-transform: uppercase; font-weight: bold;">Verified Gigs</span>
+                    <h3 id="statsVerifiedCount" style="margin: 5px 0 0 0; color: #cca01a; font-size: 1.6em;">0</h3>
+                </div>
+                <div style="background: #1a1a1a; padding: 15px; border-radius: 8px; border-bottom: 3px solid #388E3C; text-align: center;">
+                    <span style="color: #888; font-size: 0.8em; text-transform: uppercase; font-weight: bold;">Pi Escrow Total</span>
+                    <h3 id="statsPiEarned" style="margin: 5px 0 0 0; color: #388E3C; font-size: 1.6em;">0.00 π</h3>
+                </div>
+            </div>
+
+            <div style="border-left: 4px solid #cca01a; background: #1a1a1a; padding: 15px; margin-bottom: 25px; border-radius: 0 8px 8px 0;">
+                <div id="statusMsg" style="color: #aaa; font-size: 0.9em;">📡 Waiting for secure location matrix synchronization...</div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="color: #cca01a; margin: 0; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase; font-size: 0.9em;">📍 Available Verification Tasks</h3>
+                <span id="taskCountIndicator" style="background: #cca01a; color: #1a1a1a; font-weight: bold; font-size: 0.8em; padding: 3px 10px; border-radius: 12px;">0 Active</span>
+            </div>
+
+           <div id="dlvGigsContainer" style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px;">
+                </div>
+    </div>
+
+    <div id="debug-log-box" style="background:#000; color:#0f0; padding:10px; font-family:monospace; font-size:12px; max-height:150px; overflow-y:auto; margin-top:20px;">
+        [SYSTEM] $ Telemetry System Core initialized. Ready for ledger signature...
+    </div>
+
+    <script>
+  // 1. Initialize the Pi Sandbox Configuration
+  Pi.init({ version: "2.0", sandbox: true });
+
+  const gatewayLock = document.getElementById('vgnGatewayLock');
+  const mainDashboard = document.getElementById('vgnMainDashboard');
+  const gatewayStatus = document.getElementById('gatewayStatus');
+  const logBox = document.getElementById('debug-log-box');
+
+  // Custom helper to append logs to your green debug text box
+  function logDebug(message) {
+    const time = new Date().toLocaleTimeString();
+    logBox.innerHTML += `<br>[${time}] $ ${message}`;
+    logBox.scrollTop = logBox.scrollHeight;
+  }
+
+  // 2. Target the correct button ID: 'piSignInBtn'
+  document.getElementById('piSignInBtn').addEventListener('click', async () => {
+    try {
+      gatewayStatus.innerText = "Connecting to Pi Network secure vault...";
+      logDebug("Initiating Pi authentication handshake...");
+
+      // 3. Request explicit user scopes from the Pi Sandbox environment
+      const authResult = await Pi.authenticate(['username', 'payments'], onIncompletePaymentFound);
+      
+      logDebug(`Token received for user: ${authResult.user.username}. Syncing with Vercel backend...`);
+      gatewayStatus.innerText = "Verifying telemetry signature credentials...";
+
+      // 4. Send the access token to your new Vercel backend route
+      const response = await fetch('/api/auth/signin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ authResult })
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        logDebug("Identity validated securely. Syncing transit ledger keys...");
+        gatewayStatus.innerText = "Access Granted! Loading system metrics...";
+
+        // 5. Persist user session context locally
+        localStorage.setItem('pi_user', JSON.stringify(result.user));
+
+        // 6. Seamlessly transition the view without needing dashboard.html
+        setTimeout(() => {
+          gatewayLock.style.display = 'none';
+          mainDashboard.style.display = 'block';
+          document.getElementById('statusMsg').innerHTML = `🛰️ Welcome back, operative <strong>@${result.user.username}</strong>. Regional telemetry synchronized cleanly.`;
+          logDebug("System Terminal fully loaded and active.");
+        }, 1000);
+
+      } else {
+        gatewayStatus.innerText = "Authentication rejected.";
+        alert(`Authentication validation failed: ${result.error}`);
+        logDebug(`CRITICAL ERROR: Backend rejected validation. ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Handshake execution error:', error);
+      gatewayStatus.innerText = "Authorization error occurred.";
+      alert('Secure authorization process timed out or was cancelled.');
+      logDebug(`PROCESS ABORTED: ${error.message || 'User cancelled'}`);
+    }
+  });
+
+  // Mandatory callback for Pi SDK implementation
+  function onIncompletePaymentFound(payment) {
+    console.log('Stuck payment block captured during runtime:', payment);
+    logDebug(`WARN: Found incomplete ledger transaction ID: ${payment.identifier}`);
+  }
+</script>
+
+    <footer style="margin-top: 30px; text-align: center; font-size: 0.8em;">
+    <p style="color: #666;">© 2026 Vigilan Global Network Limited</p>
+    <a href="policies.html" style="color: #cca01a; text-decoration: none; margin: 0 10px;">Terms & Privacy Policy</a>
+</footer>
+
+ </body>
+</html>
