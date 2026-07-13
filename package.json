@@ -1,22 +1,19 @@
 {
-  "name": "pi-dlv-network",
+  "name": "dlv-network",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "DLV-Network Telemetry Systems",
+  "main": "index.html",
   "scripts": {
     "vercel-build": "echo 'Skipping unnecessary frontend build step...'"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
+  
   "dependencies": {
-    "@upstash/redis": "^1.38.0",
-    "axios": "^1.18.1"
+    "@upstash/redis": "^1.34.4",
+    "axios": "^1.7.9"
   },
   "devDependencies": {
-    "@types/node": "^26.1.1",
-    "@vercel/node": "^5.8.23",
-    "typescript": "^7.0.2"
+    "@types/node": "^20.11.0",
+    "@vercel/node": "^3.0.0",
+    "typescript": "^5.3.3"
   }
 }
