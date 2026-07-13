@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "vercel-build": "echo 'Skipping unnecessary frontend build step...'"
   },
   "keywords": [],
   "author": "",
