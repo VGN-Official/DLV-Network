@@ -1,12 +1,11 @@
-{
+ {
   "name": "dlv-network",
   "version": "1.0.0",
-  "description": "DLV-Network Telemetry Systems",
-  "main": "index.html",
+ "description": "DLV-Network Telemetry Systems",
   "scripts": {
-    "vercel-build": "echo 'Skipping unnecessary frontend build step...'"
-  },
+  "vercel-build": "echo 'Skipping unnecessary frontend build step...'"
   
+},
   "dependencies": {
     "@upstash/redis": "^1.34.4",
     "axios": "^1.7.9"
