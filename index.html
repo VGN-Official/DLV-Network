@@ -33,33 +33,41 @@
         </div>
 
         <div style="padding: 20px; font-family: 'Segoe UI', sans-serif;">
+     
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 25px;">
-                <div style="background: #1a1a1a; padding: 15px; border-radius: 8px; border-bottom: 3px solid #cca01a; text-align: center;">
-                    <span style="color: #888; font-size: 0.8em; text-transform: uppercase; font-weight: bold;">Verified Gigs</span>
-                    <h3 id="statsVerifiedCount" style="margin: 5px 0 0 0; color: #cca01a; font-size: 1.6em;">0</h3>
-                </div>
-                <div style="background: #1a1a1a; padding: 15px; border-radius: 8px; border-bottom: 3px solid #388E3C; text-align: center;">
-                    <span style="color: #888; font-size: 0.8em; text-transform: uppercase; font-weight: bold;">Pi Escrow Total</span>
-                    <h3 id="statsPiEarned" style="margin: 5px 0 0 0; color: #388E3C; font-size: 1.6em;">0.00 π</h3>
-                </div>
+            <div style="background: #1a1a1a; padding: 15px; border-radius: 8px; border-bottom: 3px solid #cca01a; text-align: center;">
+                <span style="color: #888; font-size: 0.8em; text-transform: uppercase; font-weight: bold;">Verified Gigs</span>
+                <h3 id="statsVerifiedCount" style="margin: 5px 0 0 0; color: #cca01a; font-size: 1.6em;">3</h3>
             </div>
-
-           <button id="fundEscrowBtn" style="background: #ffd700; color: #000000; font-weight: bold; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; margin-top: 10px;width: 100%;">
-                   ⚡ FUND ESCROW (1.0 Pi)
-           </button>
-            <div style="border-left: 4px solid #cca01a; background: #1a1a1a; padding: 15px; margin-bottom: 25px; border-radius: 0 8px 8px 0;">
-                <div id="statusMsg" style="color: #aaa; font-size: 0.9em;">📡 Waiting for secure location matrix synchronization...</div>
-            </div>
-
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3 style="color: #cca01a; margin: 0; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase; font-size: 0.9em;">📍 Available Verification Tasks</h3>
-                <span id="taskCountIndicator" style="background: #cca01a; color: #1a1a1a; font-weight: bold; font-size: 0.8em; padding: 3px 10px; border-radius: 12px;">0 Active</span>
-            </div>
-
-           <div id="dlvGigsContainer" style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px;">
-                </div>
+        <div style="background: #1a1a1a; padding: 15px; border-radius: 8px; border-bottom: 3px solid #388E3C; text-align: center;">
+            <span style="color: #888; font-size: 0.8em; text-transform: uppercase; font-weight: bold;">Pi Escrow Total</span>
+            <h3 id="statsPiEarned" style="margin: 5px 0 0 0; color: #388E3C; font-size: 1.6em;">12.50 π</h3>
+        </div>
     </div>
 
+     <!-- NEW SEED TASK FEED SECTION -->
+<div style="border-left: 4px solid #cca01a; background: #1a1a1a; padding: 15px; margin-bottom: 25px; border-radius: 0 8px 8px 0;">
+    <div id="statusMsg" style="color: #aaa; font-size: 0.9em;">📡 Waiting for secure location matrix synchronization...</div>
+</div>
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+    <h3 style="color: #cca01a; margin: 0; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase; font-size: 0.9em;">📍 Available Verification Tasks</h3>
+    <span id="taskCountIndicator" style="background: #cca01a; color: #1a1a1a; font-weight: bold; font-size: 0.8em; padding: 3px 10px; border-radius: 12px;">2 Active</span>
+</div>
+
+<div id="dlvGigsContainer" style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px;">
+    
+    <div style="background: #1a1a1a; border: 1px solid #2a2a2a; padding: 12px; border-radius: 6px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+            <span style="color: #cca01a; font-weight: bold; font-size: 0.85rem;">TASK #DLV-0841</span>
+            <span style="color: #388E3C; font-weight: bold; font-size: 0.85rem;">+1.00 π</span>
+        </div>
+        <p style="color: #888; font-size: 0.8rem; margin: 0 0 10px 0;">📍 Abuja HQ Perimeter — Verify NFC Gate Terminal signal.</p>
+        <button id="fundEscrowBtn" style="background: #ffd700; color: #000000; font-weight: bold; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; width: 100%;">
+            ⚡ FUND ESCROW (1.0 Pi)
+        </button>
+    </div>
+</div>
     <div id="debug-log-box" style="background:#000; color:#0f0; padding:10px; font-family:monospace; font-size:12px; max-height:150px; overflow-y:auto; margin-top:20px;">
         [SYSTEM] $ Telemetry System Core initialized. Ready for ledger signature...
     </div>
