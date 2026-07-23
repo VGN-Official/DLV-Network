@@ -22,6 +22,11 @@
        <button id="piSignInBtn" style="background: linear-gradient(135deg, #e0a904, #cca01a); color: #1a1a1a; font-weight: bold; padding: 16px 36px; border: none; border-radius: 30px; font-size: 1.1em; box-shadow: 0 4px 20px rgba(224, 169, 4, 0.3); cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;">
             🔑 ENTER VIA PI SECURE AUTH
        </button>
+
+       <button id="fundEscrowBtn" class="btn-primary">
+          Fund Escrow (1.0 Pi)
+      </button>
+
         <p id="gatewayStatus" style="margin-top: 20px; color: #cca01a; font-size: 0.85em; font-weight: bold; font-family: sans-serif;"></p>
    </div>
 
@@ -59,62 +64,6 @@
     <div id="debug-log-box" style="background:#000; color:#0f0; padding:10px; font-family:monospace; font-size:12px; max-height:150px; overflow-y:auto; margin-top:20px;">
         [SYSTEM] $ Telemetry System Core initialized. Ready for ledger signature...
     </div>
-
-    // Example: src/components/FundEscrowButton.tsx or inside your page file
-
-export default function FundEscrowButton() {
-  
-  const handlePayment = async () => {
-    const paymentData = {
-      amount: 1.0, // Amount of Pi
-      memo: "Escrow Deposit for DLV Verification",
-      metadata: { gigId: "GIG-101" }
-    };
-
-    const paymentCallbacks = {
-      onReadyForServerApproval: async (paymentId: string) => {
-        console.log("Ready for server approval:", paymentId);
-        // Calls your backend api/payments/approve.ts file
-        await fetch('/api/payments/approve', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ paymentId })
-        });
-      },
-
-      onReadyForServerCompletion: async (paymentId: string, txid: string) => {
-        console.log("Ready for server completion:", paymentId, txid);
-        // Calls your backend api/payments/complete.ts file
-        await fetch('/api/payments/complete', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ paymentId, txid })
-        });
-      },
-
-      onCancel: (paymentId: string) => {
-        console.log("Payment cancelled by user:", paymentId);
-      },
-
-      onError: (error: Error, payment: any) => {
-        console.error("Payment error:", error, payment);
-      }
-    };
-
-    // Trigger the Pi Wallet modal in the user's browser
-    if (typeof window !== 'undefined' && (window as any).Pi) {
-      (window as any).Pi.createPayment(paymentData, paymentCallbacks);
-    } else {
-      alert("Pi SDK not loaded. Please open in Pi Browser.");
-    }
-  };
-
-  return (
-    <button onClick={handlePayment} className="btn-primary">
-      Fund Escrow (1.0 Pi)
-    </button>
-  );
-}
 
     <script>
 
@@ -182,6 +131,8 @@ export default function FundEscrowButton() {
     }
   });
 
+  
+
   // Mandatory callback for Pi SDK implementation
   function onIncompletePaymentFound(payment) {
     console.log('Stuck payment block captured during runtime:', payment);
@@ -189,10 +140,70 @@ export default function FundEscrowButton() {
   }
 </script>
 
+  <script>
+  document.getElementById('fundEscrowBtn').addEventListener('click', async function() {
+    const paymentData = {
+      amount: 1.0, // Amount of Pi
+      memo: "Escrow Deposit for DLV Verification",
+      metadata: { gigId: "GIG-101" }
+    };
+
+    const paymentCallbacks = {
+      onReadyForServerApproval: async function(paymentId) {
+        console.log("Ready for server approval:", paymentId);
+        
+        try {
+          const response = await fetch('/api/payments/approve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ paymentId: paymentId })
+          });
+          const result = await response.json();
+          console.log("Approval response:", result);
+        } catch (err) {
+          console.error("Approval error:", err);
+        }
+      },
+
+      onReadyForServerCompletion: async function(paymentId, txid) {
+        console.log("Ready for server completion:", paymentId, txid);
+        
+        try {
+          const response = await fetch('/api/payments/complete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ paymentId: paymentId, txid: txid })
+          });
+          const result = await response.json();
+          console.log("Completion response:", result);
+          alert("Payment successfully completed!");
+        } catch (err) {
+          console.error("Completion error:", err);
+        }
+      },
+
+      onCancel: function(paymentId) {
+        console.log("Payment cancelled by user:", paymentId);
+      },
+
+      onError: function(error, payment) {
+        console.error("Payment error:", error, payment);
+      }
+    };
+
+    // Trigger the Pi Wallet modal in the user's browser
+    if (typeof window !== 'undefined' && window.Pi) {
+      window.Pi.createPayment(paymentData, paymentCallbacks);
+    } else {
+      alert("Pi SDK not loaded. Please open in Pi Browser.");
+    }
+  });
+</script>
+
     <footer style="margin-top: 30px; text-align: center; font-size: 0.8em;">
-    <p style="color: #666;">© 2026 Vigilan Global Network Limited</p>
-    <a href="policies.html" style="color: #cca01a; text-decoration: none; margin: 0 10px;">Terms & Privacy Policy</a>
-</footer>
+         <p style="color: #666;">© 2026 Vigilan Global Network Limited</p>
+         <a href="policies.html" style="color: #cca01a; text-decoration: none; margin: 0 10px;">Terms & Privacy Policy</a>
+    </footer>
 
  </body>
 </html>
