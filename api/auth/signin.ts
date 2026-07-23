@@ -49,12 +49,30 @@ export default async function handler(req: any, res: any) {
 
     const storageKey = `user:${piUser.username.toLowerCase()}`;
 
-    const userProfile = {
-      uid: piUser.uid,
-      username: piUser.username,
-      roles: ['user'],
-      lastLogin: new Date().toISOString()
-    };
+   // 1. Check if user already exists in Upstash Redis
+  const existingData = await redis.get(storageKey);
+
+  let userProfile;
+
+  if (existingData) {
+  // Existing user: preserve stats, update last login
+  const parsed = typeof existingData === 'string' ? JSON.parse(existingData) : existingData;
+  userProfile = {
+    ...parsed,
+    lastLogin: new Date().toISOString()
+  };
+} else {
+  // New user: Seed initial data
+  userProfile = {
+    uid: piUser.uid,
+    username: piUser.username,
+    roles: ['user'],
+    verifiedGigs: 3,        // Seed Data
+    escrowTotal: 12.50,     // Seed Data
+    activeTasks: 2,         // Seed Data
+    lastLogin: new Date().toISOString()
+  };
+}
 
     // 2. Save to Upstash Redis database
     await redis.set(storageKey, JSON.stringify(userProfile));

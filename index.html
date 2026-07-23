@@ -65,8 +65,7 @@
         [SYSTEM] $ Telemetry System Core initialized. Ready for ledger signature...
     </div>
 
-    <script>
-
+   <script>
   // 1. Initialize the Pi Sandbox Configuration
   Pi.init({ version: "2.0", sandbox: true });
 
@@ -75,26 +74,27 @@
   const gatewayStatus = document.getElementById('gatewayStatus');
   const logBox = document.getElementById('debug-log-box');
 
-  // Custom helper to append logs to your green debug text box
+  // Helper to append logs to green terminal debug box
   function logDebug(message) {
+    if (!logBox) return;
     const time = new Date().toLocaleTimeString();
     logBox.innerHTML += `<br>[${time}] $ ${message}`;
     logBox.scrollTop = logBox.scrollHeight;
   }
 
-  // 2. Target the correct button ID: 'piSignInBtn'
+  // 2. Authentication Handshake Flow
   document.getElementById('piSignInBtn').addEventListener('click', async () => {
     try {
       gatewayStatus.innerText = "Connecting to Pi Network secure vault...";
       logDebug("Initiating Pi authentication handshake...");
 
-      // 3. Request explicit user scopes from the Pi Sandbox environment
+      // Request explicit user scopes from Pi Sandbox environment
       const authResult = await Pi.authenticate(['username', 'payments'], onIncompletePaymentFound);
       
       logDebug(`Token received for user: ${authResult.user.username}. Syncing with Vercel backend...`);
       gatewayStatus.innerText = "Verifying telemetry signature credentials...";
 
-      // 4. Send the access token to your new Vercel backend route
+      // Send the access token to backend
       const response = await fetch('/api/auth/signin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -107,13 +107,25 @@
         logDebug("Identity validated securely. Syncing transit ledger keys...");
         gatewayStatus.innerText = "Access Granted! Loading system metrics...";
 
-        // 5. Persist user session context locally
+        // Persist user session locally
         localStorage.setItem('pi_user', JSON.stringify(result.user));
 
-        // 6. Seamlessly transition the view without needing dashboard.html
+       // Update UI Elements directly from the signin response
+      if (document.getElementById('statsVerifiedCount')) {
+        document.getElementById('statsVerifiedCount').innerText = result.user.verifiedGigs || 0;
+      }
+
+      if (document.getElementById('statsPiEarned')) {
+      document.getElementById('statsPiEarned').innerText = `${(result.user.escrowTotal || 0).toFixed(2)} π`;
+      }
+
+      if (document.getElementById('taskCountIndicator')) {
+      document.getElementById('taskCountIndicator').innerText = `${result.user.activeTasks || 0} Active`;
+      }
+        // Transition view
         setTimeout(() => {
-          gatewayLock.style.display = 'none';
-          mainDashboard.style.display = 'block';
+          if (gatewayLock) gatewayLock.style.display = 'none';
+          if (mainDashboard) mainDashboard.style.display = 'block';
           document.getElementById('statusMsg').innerHTML = `🛰️ Welcome back, operative <strong>@${result.user.username}</strong>. Regional telemetry synchronized cleanly.`;
           logDebug("System Terminal fully loaded and active.");
         }, 1000);
@@ -129,75 +141,83 @@
       alert('Secure authorization process timed out or was cancelled.');
       logDebug(`PROCESS ABORTED: ${error.message || 'User cancelled'}`);
     }
-  });
+});
 
-  
 
   // Mandatory callback for Pi SDK implementation
   function onIncompletePaymentFound(payment) {
     console.log('Stuck payment block captured during runtime:', payment);
     logDebug(`WARN: Found incomplete ledger transaction ID: ${payment.identifier}`);
   }
-</script>
 
-  <script>
-  document.getElementById('fundEscrowBtn').addEventListener('click', async function() {
-    const paymentData = {
-      amount: 1.0, // Amount of Pi
-      memo: "Escrow Deposit for DLV Verification",
-      metadata: { gigId: "GIG-101" }
-    };
+  // 3. Payment Escrow Action Flow
+  const fundEscrowBtn = document.getElementById('fundEscrowBtn');
+  if (fundEscrowBtn) {
+    fundEscrowBtn.addEventListener('click', async function() {
+      const paymentData = {
+        amount: 1.0, // Amount of Pi
+        memo: "Escrow Deposit for DLV Verification",
+        metadata: { gigId: "GIG-101" }
+      };
 
-    const paymentCallbacks = {
-      onReadyForServerApproval: async function(paymentId) {
-        console.log("Ready for server approval:", paymentId);
-        
-        try {
-          const response = await fetch('/api/payments/approve', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ paymentId: paymentId })
-          });
-          const result = await response.json();
-          console.log("Approval response:", result);
-        } catch (err) {
-          console.error("Approval error:", err);
+      const paymentCallbacks = {
+        onReadyForServerApproval: async function(paymentId) {
+          console.log("Ready for server approval:", paymentId);
+          logDebug(`Payment approval initialized for ID: ${paymentId}`);
+          
+          try {
+            const response = await fetch('/api/payments/approve', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ paymentId: paymentId })
+            });
+            const result = await response.json();
+            console.log("Approval response:", result);
+          } catch (err) {
+            console.error("Approval error:", err);
+            logDebug(`ERROR: Payment approval failed on server.`);
+          }
+        },
+
+        onReadyForServerCompletion: async function(paymentId, txid) {
+          console.log("Ready for server completion:", paymentId, txid);
+          logDebug(`Completing ledger entry for TxID: ${txid}`);
+          
+          try {
+            const response = await fetch('/api/payments/complete', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ paymentId: paymentId, txid: txid })
+            });
+            const result = await response.json();
+            console.log("Completion response:", result);
+            alert("Payment successfully completed!");
+            logDebug(`SUCCESS: Escrow ledger synchronized.`);
+          } catch (err) {
+            console.error("Completion error:", err);
+            logDebug(`ERROR: Payment completion sync failed.`);
+          }
+        },
+
+        onCancel: function(paymentId) {
+          console.log("Payment cancelled by user:", paymentId);
+          logDebug(`NOTICE: Payment ${paymentId} cancelled by user.`);
+        },
+
+        onError: function(error, payment) {
+          console.error("Payment error:", error, payment);
+          logDebug(`ERROR: Payment engine exception encountered.`);
         }
-      },
+      };
 
-      onReadyForServerCompletion: async function(paymentId, txid) {
-        console.log("Ready for server completion:", paymentId, txid);
-        
-        try {
-          const response = await fetch('/api/payments/complete', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ paymentId: paymentId, txid: txid })
-          });
-          const result = await response.json();
-          console.log("Completion response:", result);
-          alert("Payment successfully completed!");
-        } catch (err) {
-          console.error("Completion error:", err);
-        }
-      },
-
-      onCancel: function(paymentId) {
-        console.log("Payment cancelled by user:", paymentId);
-      },
-
-      onError: function(error, payment) {
-        console.error("Payment error:", error, payment);
+      // Trigger the Pi Wallet modal
+      if (typeof window !== 'undefined' && window.Pi) {
+        window.Pi.createPayment(paymentData, paymentCallbacks);
+      } else {
+        alert("Pi SDK not loaded. Please open in Pi Browser.");
       }
-    };
-
-    // Trigger the Pi Wallet modal in the user's browser
-    if (typeof window !== 'undefined' && window.Pi) {
-      window.Pi.createPayment(paymentData, paymentCallbacks);
-    } else {
-      alert("Pi SDK not loaded. Please open in Pi Browser.");
-    }
-  });
+    });
+  }
 </script>
 
     <footer style="margin-top: 30px; text-align: center; font-size: 0.8em;">
