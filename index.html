@@ -50,6 +50,8 @@
     <div id="statusMsg" style="color: #aaa; font-size: 0.9em;">📡 Waiting for secure location matrix synchronization...</div>
 </div>
 
+<div id="taskFeed"></div>
+
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
     <h3 style="color: #cca01a; margin: 0; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase; font-size: 0.9em;">📍 Available Verification Tasks</h3>
     <span id="taskCountIndicator" style="background: #cca01a; color: #1a1a1a; font-weight: bold; font-size: 0.8em; padding: 3px 10px; border-radius: 12px;">2 Active</span>
@@ -72,7 +74,7 @@
         [SYSTEM] $ Telemetry System Core initialized. Ready for ledger signature...
     </div>
 
-   <script>
+  <script>
   // 1. Initialize the Pi Sandbox Configuration
   Pi.init({ version: "2.0", sandbox: true });
 
@@ -90,7 +92,7 @@
   }
 
   // 2. Authentication Handshake Flow
-  document.getElementById('piSignInBtn').addEventListener('click', async () => {
+  document.getElementById('piSignInBtn')?.addEventListener('click', async () => {
     try {
       gatewayStatus.innerText = "Connecting to Pi Network secure vault...";
       logDebug("Initiating Pi authentication handshake...");
@@ -117,24 +119,28 @@
         // Persist user session locally
         localStorage.setItem('pi_user', JSON.stringify(result.user));
 
-       // Update UI Elements directly from the signin response
-      if (document.getElementById('statsVerifiedCount')) {
-        document.getElementById('statsVerifiedCount').innerText = result.user.verifiedGigs || 0;
-      }
+        // Update UI Elements directly from the signin response
+        if (document.getElementById('statsVerifiedCount')) {
+          document.getElementById('statsVerifiedCount').innerText = result.user.verifiedGigs || 0;
+        }
 
-      if (document.getElementById('statsPiEarned')) {
-      document.getElementById('statsPiEarned').innerText = `${(result.user.escrowTotal || 0).toFixed(2)} π`;
-      }
+        if (document.getElementById('statsPiEarned')) {
+          document.getElementById('statsPiEarned').innerText = `${(result.user.escrowTotal || 0).toFixed(2)} π`;
+        }
 
-      if (document.getElementById('taskCountIndicator')) {
-      document.getElementById('taskCountIndicator').innerText = `${result.user.activeTasks || 0} Active`;
-      }
-        // Transition view
+        if (document.getElementById('taskCountIndicator')) {
+          document.getElementById('taskCountIndicator').innerText = `${result.user.activeTasks || 0} Active`;
+        }
+
+        // Transition view and initialize dynamic tasks
         setTimeout(() => {
           if (gatewayLock) gatewayLock.style.display = 'none';
           if (mainDashboard) mainDashboard.style.display = 'block';
           document.getElementById('statusMsg').innerHTML = `🛰️ Welcome back, operative <strong>@${result.user.username}</strong>. Regional telemetry synchronized cleanly.`;
           logDebug("System Terminal fully loaded and active.");
+          
+          // Render initial tasks feed
+          renderTaskFeed();
         }, 1000);
 
       } else {
@@ -148,8 +154,7 @@
       alert('Secure authorization process timed out or was cancelled.');
       logDebug(`PROCESS ABORTED: ${error.message || 'User cancelled'}`);
     }
-});
-
+  });
 
   // Mandatory callback for Pi SDK implementation
   function onIncompletePaymentFound(payment) {
@@ -157,75 +162,147 @@
     logDebug(`WARN: Found incomplete ledger transaction ID: ${payment.identifier}`);
   }
 
-  // 3. Payment Escrow Action Flow
+  // 3. Static Payment Escrow Action Flow
   const fundEscrowBtn = document.getElementById('fundEscrowBtn');
   if (fundEscrowBtn) {
     fundEscrowBtn.addEventListener('click', async function() {
-      const paymentData = {
-        amount: 1.0, // Amount of Pi
-        memo: "Escrow Deposit for DLV Verification",
-        metadata: { gigId: "GIG-101" }
-      };
-
-      const paymentCallbacks = {
-        onReadyForServerApproval: async function(paymentId) {
-          console.log("Ready for server approval:", paymentId);
-          logDebug(`Payment approval initialized for ID: ${paymentId}`);
-          
-          try {
-            const response = await fetch('/api/payments/approve', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ paymentId: paymentId })
-            });
-            const result = await response.json();
-            console.log("Approval response:", result);
-          } catch (err) {
-            console.error("Approval error:", err);
-            logDebug(`ERROR: Payment approval failed on server.`);
-          }
-        },
-
-        onReadyForServerCompletion: async function(paymentId, txid) {
-          console.log("Ready for server completion:", paymentId, txid);
-          logDebug(`Completing ledger entry for TxID: ${txid}`);
-          
-          try {
-            const response = await fetch('/api/payments/complete', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ paymentId: paymentId, txid: txid })
-            });
-            const result = await response.json();
-            console.log("Completion response:", result);
-            alert("Payment successfully completed!");
-            logDebug(`SUCCESS: Escrow ledger synchronized.`);
-          } catch (err) {
-            console.error("Completion error:", err);
-            logDebug(`ERROR: Payment completion sync failed.`);
-          }
-        },
-
-        onCancel: function(paymentId) {
-          console.log("Payment cancelled by user:", paymentId);
-          logDebug(`NOTICE: Payment ${paymentId} cancelled by user.`);
-        },
-
-        onError: function(error, payment) {
-          console.error("Payment error:", error, payment);
-          logDebug(`ERROR: Payment engine exception encountered.`);
-        }
-      };
-
-      // Trigger the Pi Wallet modal
-      if (typeof window !== 'undefined' && window.Pi) {
-        window.Pi.createPayment(paymentData, paymentCallbacks);
-      } else {
-        alert("Pi SDK not loaded. Please open in Pi Browser.");
-      }
+      executePiPayment(1.0, "GIG-101");
     });
   }
 
+  // =========================================================================
+  // 4. DYNAMIC TASK FEED & VERIFY SYSTEM (ADDED BELOW)
+  // =========================================================================
+
+  // Initial Seed State for Tasks
+  let availableTasks = [
+    { id: "DLV-0841", location: "Abuja HQ Perimeter", reward: 1.0, desc: "Verify NFC Gate Terminal signal." },
+    { id: "DLV-0842", location: "Sector 4 Relay Station", reward: 2.5, desc: "Audit biometric terminal telemetry sync." }
+  ];
+
+  // Render Tasks dynamically into the HTML container `#taskFeed`
+  function renderTaskFeed() {
+    const feed = document.getElementById('taskFeed');
+    if (!feed) return;
+
+    feed.innerHTML = ''; // Clear existing cards
+
+    if (availableTasks.length === 0) {
+      feed.innerHTML = `<div style="color: #666; font-size: 0.85rem; text-align: center; padding: 12px; background: #111; border-radius: 6px;">No pending verification tasks.</div>`;
+      updateTaskCountBadge(0);
+      return;
+    }
+
+    updateTaskCountBadge(availableTasks.length);
+
+    availableTasks.forEach((task) => {
+      const card = document.createElement('div');
+      card.style.cssText = "background: #111; border: 1px solid #222; padding: 12px; border-radius: 8px; margin-bottom: 12px;";
+      card.innerHTML = `
+        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+          <span style="color: #ffd700; font-weight: bold; font-size: 0.85rem;">TASK #${task.id}</span>
+          <span style="color: #00ff00; font-weight: bold; font-size: 0.85rem;">+${task.reward.toFixed(2)} π</span>
+        </div>
+        <p style="color: #aaa; font-size: 0.8rem; margin: 0 0 10px 0;">📍 ${task.location} — ${task.desc}</p>
+        <div style="display: flex; gap: 8px;">
+          <button onclick="executePiPayment(${task.reward}, '${task.id}')" style="flex: 1; background: #ffd700; color: #000; border: none; font-weight: bold; font-size: 0.75rem; padding: 10px 4px; border-radius: 5px; cursor: pointer;">
+            ⚡ FUND ESCROW
+          </button>
+          <button onclick="verifyTaskAction('${task.id}', ${task.reward})" style="flex: 1; background: #00ff00; color: #000; border: none; font-weight: bold; font-size: 0.75rem; padding: 10px 4px; border-radius: 5px; cursor: pointer;">
+            🔍 VERIFY TASK
+          </button>
+        </div>
+      `;
+      feed.appendChild(card);
+    });
+  }
+
+  function updateTaskCountBadge(count) {
+    const badge = document.getElementById('taskCountIndicator');
+    if (badge) badge.innerText = `${count} Active`;
+  }
+
+  // Action 1: Handle "Verify Task" button click
+  window.verifyTaskAction = function(taskId, reward) {
+    logDebug(`Validating telemetry for Task #${taskId}...`);
+    
+    // Simulate verification success
+    alert(`🔍 Task #${taskId} Verified!\n\nSignal: Synchronized\nStatus: Verified\n\n+${reward.toFixed(2)} Pi credited to operative.`);
+    logDebug(`SUCCESS: Task #${taskId} verified cleanly.`);
+
+    // Remove task from active list
+    availableTasks = availableTasks.filter(t => t.id !== taskId);
+
+    // Update stats UI
+    const countEl = document.getElementById('statsVerifiedCount');
+    if (countEl) {
+      let currentVal = parseInt(countEl.innerText) || 0;
+      countEl.innerText = currentVal + 1;
+    }
+
+    renderTaskFeed();
+  };
+
+  // Action 2: Reusable Pi Payment Function
+  window.executePiPayment = function(amount, taskId) {
+    const paymentData = {
+      amount: amount,
+      memo: `Escrow Deposit for Task #${taskId}`,
+      metadata: { gigId: taskId }
+    };
+
+    const paymentCallbacks = {
+      onReadyForServerApproval: async function(paymentId) {
+        logDebug(`Payment approval initialized for ID: ${paymentId}`);
+        try {
+          const response = await fetch('/api/payments/approve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ paymentId })
+          });
+          const result = await response.json();
+          console.log("Approval response:", result);
+        } catch (err) {
+          console.error("Approval error:", err);
+          logDebug(`ERROR: Payment approval failed on server.`);
+        }
+      },
+
+      onReadyForServerCompletion: async function(paymentId, txid) {
+        logDebug(`Completing ledger entry for TxID: ${txid}`);
+        try {
+          const response = await fetch('/api/payments/complete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ paymentId, txid })
+          });
+          const result = await response.json();
+          alert("Escrow Payment Completed!");
+          logDebug(`SUCCESS: Escrow ledger synchronized.`);
+        } catch (err) {
+          console.error("Completion error:", err);
+          logDebug(`ERROR: Payment completion sync failed.`);
+        }
+      },
+
+      onCancel: function(paymentId) {
+        logDebug(`NOTICE: Payment ${paymentId} cancelled by user.`);
+      },
+
+      onError: function(error) {
+        logDebug(`ERROR: Payment engine exception encountered.`);
+      }
+    };
+
+    if (typeof window !== 'undefined' && window.Pi) {
+      window.Pi.createPayment(paymentData, paymentCallbacks);
+    } else {
+      alert("Pi SDK not loaded. Please open in Pi Browser.");
+    }
+  };
+
+  // Run initial render if element exists on load
+  document.addEventListener('DOMContentLoaded', renderTaskFeed);
 </script>
 
     <footer style="margin-top: 30px; text-align: center; font-size: 0.8em;">
