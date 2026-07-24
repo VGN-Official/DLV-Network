@@ -50,8 +50,6 @@
     <div id="statusMsg" style="color: #aaa; font-size: 0.9em;">📡 Waiting for secure location matrix synchronization...</div>
 </div>
 
-<div id="taskFeed"></div>
-
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
     <h3 style="color: #cca01a; margin: 0; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase; font-size: 0.9em;">📍 Available Verification Tasks</h3>
     <span id="taskCountIndicator" style="background: #cca01a; color: #1a1a1a; font-weight: bold; font-size: 0.8em; padding: 3px 10px; border-radius: 12px;">2 Active</span>
@@ -60,10 +58,15 @@
 <div id="dlvGigsContainer" style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px;">
     
     <div style="background: #1a1a1a; border: 1px solid #2a2a2a; padding: 12px; border-radius: 6px;">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-            <span style="color: #cca01a; font-weight: bold; font-size: 0.85rem;">TASK #DLV-0841</span>
-            <span style="color: #388E3C; font-weight: bold; font-size: 0.85rem;">+1.00 π</span>
-        </div>
+        <!-- AVAILABLE VERIFICATION TASKS HEADER -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; margin-bottom: 12px;">
+          <span style="color: #ffd700; font-weight: bold; font-size: 0.9rem;">📍 AVAILABLE VERIFICATION TASKS</span>
+          <span id="taskCountBadge" style="background: #ffd700; color: #000; font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; font-weight: bold;">0 Active</span>
+      </div>
+
+      <!-- DYNAMIC TASK FEED (JS will inject cards or empty state here) -->
+      <div id="taskFeed"></div>
+
         <p style="color: #888; font-size: 0.8rem; margin: 0 0 10px 0;">📍 Abuja HQ Perimeter — Verify NFC Gate Terminal signal.</p>
         <button id="fundEscrowBtn" style="background: #ffd700; color: #000000; font-weight: bold; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; width: 100%;">
             ⚡ FUND ESCROW (1.0 Pi)
@@ -192,6 +195,40 @@ async function loadDynamicTasks() {
     feed.innerHTML = '<div style="color:#ff4444; font-size:0.85rem; text-align:center; padding:10px;">Failed to load task feed.</div>';
   }
 }
+
+// -------------------------------------------------------------
+  // Dynamic Task Loader (PASTE HERE)
+  // -------------------------------------------------------------
+  async function loadDynamicTasks() {
+    const feed = document.getElementById('taskFeed');
+    if (!feed) return;
+
+    feed.innerHTML = '<div style="color:#888; font-size:0.85rem; text-align:center; padding:10px;">Syncing regional telemetry tasks...</div>';
+
+    try {
+      const response = await fetch('/api/tasks');
+      const data = await response.json();
+
+      if (data.success && data.tasks && data.tasks.length > 0) {
+        renderTaskList(data.tasks);
+      } else {
+        // FALLBACK SEED DATA: Render default operational tasks if Redis is empty
+        const fallbackTasks = [
+          { id: "DLV-0841", location: "Abuja HQ Perimeter", reward: 1.0, desc: "Verify NFC Gate Terminal signal." },
+          { id: "DLV-0842", location: "Sector 4 Relay Station", reward: 2.5, desc: "Audit biometric terminal telemetry sync." }
+        ];
+        renderTaskList(fallbackTasks);
+      }
+    } catch (err) {
+      console.error("Task synchronization error:", err);
+      // If API fails, still show fallback UI for testing
+      const fallbackTasks = [
+        { id: "DLV-0841", location: "Abuja HQ Perimeter", reward: 1.0, desc: "Verify NFC Gate Terminal signal." },
+        { id: "DLV-0842", location: "Sector 4 Relay Station", reward: 2.5, desc: "Audit biometric terminal telemetry sync." }
+      ];
+      renderTaskList(fallbackTasks);
+    }
+  }
 
 // Render dynamic task list from API response
 function renderTaskList(tasks) {
