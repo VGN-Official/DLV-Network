@@ -84,12 +84,12 @@
   const logBox = document.getElementById('debug-log-box');
 
   // Helper to append logs to green terminal debug box
-  //function logDebug(message) {
-    //if (!logBox) return;
-    //const time = new Date().toLocaleTimeString();
-    //logBox.innerHTML += `<br>[${time}] $ ${message}`;
-    //logBox.scrollTop = logBox.scrollHeight;
-  //}
+  function logDebug(message) {
+    if (!logBox) return;
+    const time = new Date().toLocaleTimeString();
+    logBox.innerHTML += `<br>[${time}] $ ${message}`;
+    logBox.scrollTop = logBox.scrollHeight;
+  }
 
   // 2. Authentication Handshake Flow
   document.getElementById('piSignInBtn')?.addEventListener('click', async () => {
