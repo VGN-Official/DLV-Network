@@ -84,12 +84,12 @@
   const logBox = document.getElementById('debug-log-box');
 
   // Helper to append logs to green terminal debug box
-  function logDebug(message) {
-    if (!logBox) return;
-    const time = new Date().toLocaleTimeString();
-    logBox.innerHTML += `<br>[${time}] $ ${message}`;
-    logBox.scrollTop = logBox.scrollHeight;
-  }
+  //function logDebug(message) {
+    //if (!logBox) return;
+    //const time = new Date().toLocaleTimeString();
+    //logBox.innerHTML += `<br>[${time}] $ ${message}`;
+    //logBox.scrollTop = logBox.scrollHeight;
+  //}
 
   // 2. Authentication Handshake Flow
   document.getElementById('piSignInBtn')?.addEventListener('click', async () => {
@@ -170,53 +170,59 @@
     });
   }
 
-  // =========================================================================
-  // 4. DYNAMIC TASK FEED & VERIFY SYSTEM (ADDED BELOW)
-  // =========================================================================
+  // Fetch dynamic tasks from Vercel API / Upstash Redis
+async function loadDynamicTasks() {
+  const feed = document.getElementById('taskFeed');
+  if (!feed) return;
 
-  // Initial Seed State for Tasks
-  let availableTasks = [
-    { id: "DLV-0841", location: "Abuja HQ Perimeter", reward: 1.0, desc: "Verify NFC Gate Terminal signal." },
-    { id: "DLV-0842", location: "Sector 4 Relay Station", reward: 2.5, desc: "Audit biometric terminal telemetry sync." }
-  ];
+  feed.innerHTML = '<div style="color:#888; font-size:0.85rem; text-align:center; padding:10px;">Syncing regional telemetry tasks...</div>';
 
-  // Render Tasks dynamically into the HTML container `#taskFeed`
-  function renderTaskFeed() {
-    const feed = document.getElementById('taskFeed');
-    if (!feed) return;
+  try {
+    const response = await fetch('/api/tasks');
+    const data = await response.json();
 
-    feed.innerHTML = ''; // Clear existing cards
-
-    if (availableTasks.length === 0) {
-      feed.innerHTML = `<div style="color: #666; font-size: 0.85rem; text-align: center; padding: 12px; background: #111; border-radius: 6px;">No pending verification tasks.</div>`;
+    if (data.success && data.tasks.length > 0) {
+      renderTaskList(data.tasks);
+    } else {
+      feed.innerHTML = '<div style="color:#666; font-size:0.85rem; text-align:center; padding:10px;">No active verification tasks in your sector.</div>';
       updateTaskCountBadge(0);
-      return;
     }
-
-    updateTaskCountBadge(availableTasks.length);
-
-    availableTasks.forEach((task) => {
-      const card = document.createElement('div');
-      card.style.cssText = "background: #111; border: 1px solid #222; padding: 12px; border-radius: 8px; margin-bottom: 12px;";
-      card.innerHTML = `
-        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-          <span style="color: #ffd700; font-weight: bold; font-size: 0.85rem;">TASK #${task.id}</span>
-          <span style="color: #00ff00; font-weight: bold; font-size: 0.85rem;">+${task.reward.toFixed(2)} π</span>
-        </div>
-        <p style="color: #aaa; font-size: 0.8rem; margin: 0 0 10px 0;">📍 ${task.location} — ${task.desc}</p>
-        <div style="display: flex; gap: 8px;">
-          <button onclick="executePiPayment(${task.reward}, '${task.id}')" style="flex: 1; background: #ffd700; color: #000; border: none; font-weight: bold; font-size: 0.75rem; padding: 10px 4px; border-radius: 5px; cursor: pointer;">
-            ⚡ FUND ESCROW
-          </button>
-          <button onclick="verifyTaskAction('${task.id}', ${task.reward})" style="flex: 1; background: #00ff00; color: #000; border: none; font-weight: bold; font-size: 0.75rem; padding: 10px 4px; border-radius: 5px; cursor: pointer;">
-            🔍 VERIFY TASK
-          </button>
-        </div>
-      `;
-      feed.appendChild(card);
-    });
+  } catch (err) {
+    console.error("Task synchronization error:", err);
+    feed.innerHTML = '<div style="color:#ff4444; font-size:0.85rem; text-align:center; padding:10px;">Failed to load task feed.</div>';
   }
+}
 
+// Render dynamic task list from API response
+function renderTaskList(tasks) {
+  const feed = document.getElementById('taskFeed');
+  if (!feed) return;
+
+  feed.innerHTML = ''; // Clear loading message
+
+  updateTaskCountBadge(tasks.length);
+
+  tasks.forEach((task) => {
+    const card = document.createElement('div');
+    card.style.cssText = "background: #111; border: 1px solid #222; padding: 12px; border-radius: 8px; margin-bottom: 12px;";
+    card.innerHTML = `
+      <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+        <span style="color: #ffd700; font-weight: bold; font-size: 0.85rem;">TASK #${task.id}</span>
+        <span style="color: #00ff00; font-weight: bold; font-size: 0.85rem;">+${Number(task.reward).toFixed(2)} π</span>
+      </div>
+      <p style="color: #aaa; font-size: 0.8rem; margin: 0 0 10px 0;">📍 ${task.location} — ${task.desc}</p>
+      <div style="display: flex; gap: 8px;">
+        <button onclick="executePiPayment(${task.reward}, '${task.id}')" style="flex:1; background:#ffd700; color:#000; border:none; font-weight:bold; font-size:0.75rem; padding:10px 4px; border-radius:5px; cursor:pointer;">
+          ⚡ FUND ESCROW
+        </button>
+        <button onclick="verifyTaskAction('${task.id}', ${task.reward})" style="flex:1; background:#00ff00; color:#000; border:none; font-weight:bold; font-size:0.75rem; padding:10px 4px; border-radius:5px; cursor:pointer;">
+          🔍 VERIFY TASK
+        </button>
+      </div>
+    `;
+    feed.appendChild(card);
+  });
+}
   function updateTaskCountBadge(count) {
     const badge = document.getElementById('taskCountIndicator');
     if (badge) badge.innerText = `${count} Active`;
@@ -301,8 +307,8 @@
     }
   };
 
-  // Run initial render if element exists on load
-  document.addEventListener('DOMContentLoaded', renderTaskFeed);
+  // Trigger load on page startup
+document.addEventListener('DOMContentLoaded', loadDynamicTasks);
 </script>
 
     <footer style="margin-top: 30px; text-align: center; font-size: 0.8em;">
