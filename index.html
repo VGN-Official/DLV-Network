@@ -32,39 +32,39 @@
             <span style="background: #2a2a2a; font-size: 0.75em; padding: 4px 8px; border-radius: 4px; color: #888; font-weight: bold;">v1.0.0</span>
         </div>
 
-       <!-- 1. STATS COUNTERS (TOP) -->
-      <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-      <!-- Verified Gigs Card -->
-      <div style="flex: 1; background: #111; padding: 12px; border: 1px solid #333; border-radius: 6px; text-align: center;">
-      <span style="color: #888; font-size: 0.75rem; display: block;">VERIFIED GIGS</span>
-      <span id="statGigs" style="color: #ffd700; font-size: 1.5rem; font-weight: bold;">0</span>
-      </div>
+      <!-- 1. STATS COUNTERS (TOP) -->
+<div style="display: flex; gap: 10px; margin-bottom: 15px;">
+  <!-- Verified Gigs Card -->
+  <div style="flex: 1; background: #111; padding: 12px; border: 1px solid #333; border-radius: 6px; text-align: center;">
+    <span style="color: #888; font-size: 0.75rem; display: block;">VERIFIED GIGS</span>
+    <span id="statGigs" style="color: #ffd700; font-size: 1.5rem; font-weight: bold;">0</span>
+  </div>
 
-        <!-- Pi Escrow Total Card -->
-        <div style="flex: 1; background: #111; padding: 12px; border: 1px solid #333; border-radius: 6px; text-align: center;">
-            <span style="color: #888; font-size: 0.75rem; display: block;">PI ESCROW TOTAL</span>
-            <span id="statEscrow" style="color: #00ff00; font-size: 1.5rem; font-weight: bold;">0.00 π</span>
-        </div>
-        </div>
+  <!-- Pi Escrow Total Card -->
+  <div style="flex: 1; background: #111; padding: 12px; border: 1px solid #333; border-radius: 6px; text-align: center;">
+    <span style="color: #888; font-size: 0.75rem; display: block;">PI ESCROW TOTAL</span>
+    <span id="statEscrow" style="color: #00ff00; font-size: 1.5rem; font-weight: bold;">0.00 π</span>
+  </div>
+</div>
 
-          <!-- 2. WELCOME BANNER (MIDDLE) -->
-        <div style="background: #111; border-left: 3px solid #ffd700; padding: 10px; margin-bottom: 15px; border-radius: 4px;">
-        <p style="color: #ccc; font-size: 0.85rem; margin: 0;">
-              🛰️ Welcome back, operative <strong style="color: #fff;">@mohammedbabangida</strong>. Regional telemetry synchronized cleanly.
-        </p>
-        </div>
+<!-- 2. WELCOME BANNER (MIDDLE) -->
+<div style="background: #111; border-left: 3px solid #ffd700; padding: 10px; margin-bottom: 15px; border-radius: 4px;">
+  <p style="color: #ccc; font-size: 0.85rem; margin: 0;">
+    🛰️ Welcome back, operative <strong style="color: #fff;">@mohammedbabangida</strong>. Regional telemetry synchronized cleanly.
+  </p>
+</div>
 
-          <!-- 3. TASKS CONTAINER (BOTTOM) -->
-          <div style="background: #1a1a1a; border: 1px solid #2a2a2a; padding: 12px; border-radius: 6px;">
-          <!-- AVAILABLE VERIFICATION TASKS HEADER -->
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-              <span style="color: #ffd700; font-weight: bold; font-size: 0.9rem;">📍 AVAILABLE VERIFICATION TASKS</span>
-              <span id="taskCountBadge" style="background: #ffd700; color: #000; font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; font-weight: bold;">0 Active</span>
-          </div>
+<!-- 3. TASKS CONTAINER (BOTTOM) -->
+<div style="background: #1a1a1a; border: 1px solid #2a2a2a; padding: 12px; border-radius: 6px;">
+  <!-- AVAILABLE VERIFICATION TASKS HEADER -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+    <span style="color: #ffd700; font-weight: bold; font-size: 0.9rem;">📍 AVAILABLE VERIFICATION TASKS</span>
+    <span id="taskCountBadge" style="background: #ffd700; color: #000; font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; font-weight: bold;">0 Active</span>
+  </div>
 
-            <!-- DYNAMIC TASK FEED (JS will inject cards or empty state here) -->
-            
-        <div id="taskFeed"></div>
+  <!-- DYNAMIC TASK FEED (JavaScript injects full dual-button cards here) -->
+  <div id="taskFeed"></div>
+</div>
             <p style="color: #888; font-size: 0.8rem; margin: 0 0 10px 0;">📍 Abuja HQ Perimeter — Verify NFC Gate Terminal signal.</p>
          <button id="fundEscrowBtn" style="background: #ffd700; color: #000000; font-weight: bold; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; width: 100%;">
             ⚡ FUND ESCROW (1.0 Pi)
@@ -263,16 +263,28 @@ function renderTaskList(tasks) {
     if (badge) badge.innerText = `${count} Active`;
   }
 
-  // Action 1: Handle "Verify Task" button click
-  function verifyTaskAction(taskId, reward) {
-  console.log(`[VERIFY] Executing verification sequence for Task #${taskId}...`);
+function verifyTaskAction(taskId, reward) {
+  // Convert reward safely to a float number
+  const numReward = parseFloat(reward) || 0;
 
-  // 1. Increment stats dynamically
-  incrementVerifiedGigs();
-  addEscrowTotal(reward);
+  // 1. Update the VERIFIED GIGS counter
+  const gigsEl = document.getElementById('statGigs');
+  if (gigsEl) {
+    let currentGigs = parseInt(gigsEl.innerText, 10) || 0;
+    gigsEl.innerText = currentGigs + 1;
+  }
 
-  // 2. Alert / Notify operative
-  alert(`✅ Task #${taskId} Successfully Verified!\n\nReward: +${reward.toFixed(2)} Pi credited to telemetry ledger.`);
+  // 2. Update the PI ESCROW TOTAL counter
+  const escrowEl = document.getElementById('statEscrow');
+  if (escrowEl) {
+    let currentTotal = parseFloat(escrowEl.innerText.replace(/[^0-9.]/g, '')) || 0;
+    let newTotal = currentTotal + numReward;
+    escrowEl.innerText = `${newTotal.toFixed(2)} π`;
+  }
+
+  // 3. User Feedback Alert
+  alert(`✅ Task #${taskId} Verified!\n\nReward: +${numReward.toFixed(2)} Pi credited.`);
+}
 
   // 3. Remove the verified task card from the UI feed
   const feed = document.getElementById('taskFeed');
@@ -280,7 +292,7 @@ function renderTaskList(tasks) {
     // Re-render remaining tasks or refresh feed
     loadDynamicTasks(); 
   }
-}
+
   // Action 2: Reusable Pi Payment Function
   window.executePiPayment = function(amount, taskId) {
     const paymentData = {
