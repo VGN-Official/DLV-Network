@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pi-DLV Network - Earn Pi by Completing Tasks</title>
+    <meta name="description" content="DLV Network lets Pi Pioneers complete verified tasks and earn Pi rewards securely in the Pi Browser." />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Pi SDK -->
+    <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+</head>
+<body style="margin: 0; background-color: #121212; color: #ffffff;">
+
+  <!-- GATEWAY LOCK SCREEN -->
+  <div id="vgnGatewayLock" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: #1a1a1a; padding: 20px; text-align: center;">
+      <h1 style="color: #cca01a; margin-bottom: 5px; font-weight: bold; font-family: sans-serif; font-size: 2.2em;">Pi-DLV Network</h1>
+      <p style="color: #666666; font-size: 0.8em; text-transform: uppercase; letter-spacing: 2px; margin-top: 0; margin-bottom: 25px; font-weight: bold;">
+          Powered by Vigilan Global Network Limited
+      </p>
+      <p style="color: #aaaaaa; max-width: 340px; margin: 0 auto 30px auto; font-size: 0.95em; line-height: 1.5; font-family: sans-serif;">
+          Decentralized Logistics & Verification Hub. Authenticate to sync with your local regional transit telemetry grid.
+      </p>
+      <button id="piSignInBtn" style="background: linear-gradient(135deg, #e0a904, #cca01a); color: #1a1a1a; font-weight: bold; padding: 16px 36px; border: none; border-radius: 30px; font-size: 1.1em; box-shadow: 0 4px 20px rgba(224, 169, 4, 0.3); cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;">
+          🔑 ENTER VIA PI SECURE AUTH
+      </button>
+      <p id="gatewayStatus" style="margin-top: 20px; color: #cca01a; font-size: 0.85em; font-weight: bold; font-family: sans-serif;"></p>
+  </div>
+
+  <!-- MAIN DASHBOARD -->
+  <div id="vgnMainDashboard" style="display: none; padding: 10px;">
+      <div style="background: #1a1a1a; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a2a; margin-bottom: 15px;">
+          <span style="font-weight: bold; color: #cca01a; letter-spacing: 0.5px; font-family: sans-serif;">🛰️ PI-DLV SYSTEM TERMINAL</span>
+          <span style="background: #2a2a2a; font-size: 0.75em; padding: 4px 8px; border-radius: 4px; color: #888; font-weight: bold;">v1.0.0</span>
+      </div>
+
+      <!-- 1. STATS COUNTERS -->
+      <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+        <div style="flex: 1; background: #111; padding: 12px; border: 1px solid #333; border-radius: 6px; text-align: center;">
+          <span style="color: #888; font-size: 0.75rem; display: block;">VERIFIED GIGS</span>
+          <span id="statGigs" style="color: #ffd700; font-size: 1.5rem; font-weight: bold;">0</span>
+        </div>
+
+        <div style="flex: 1; background: #111; padding: 12px; border: 1px solid #333; border-radius: 6px; text-align: center;">
+          <span style="color: #888; font-size: 0.75rem; display: block;">PI ESCROW TOTAL</span>
+          <span id="statEscrow" style="color: #00ff00; font-size: 1.5rem; font-weight: bold;">0.00 π</span>
+        </div>
+      </div>
+
+      <!-- 2. WELCOME BANNER -->
+      <div style="background: #111; border-left: 3px solid #ffd700; padding: 10px; margin-bottom: 15px; border-radius: 4px;">
+        <p id="statusMsg" style="color: #ccc; font-size: 0.85rem; margin: 0;">
+          🛰️ Welcome back, operative <strong style="color: #fff;">@Pioneer</strong>. Regional telemetry synchronized cleanly.
+        </p>
+      </div>
+
+      <!-- 3. TASKS CONTAINER -->
+      <div style="background: #1a1a1a; border: 1px solid #2a2a2a; padding: 12px; border-radius: 6px; margin-bottom: 15px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <span style="color: #ffd700; font-weight: bold; font-size: 0.9rem;">📍 AVAILABLE VERIFICATION TASKS</span>
+          <span id="taskCountBadge" style="background: #ffd700; color: #000; font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; font-weight: bold;">0 Active</span>
+        </div>
+
+        <!-- DYNAMIC TASK FEED -->
+        <div id="taskFeed"></div>
+      </div>
+
+      <button id="fundEscrowBtn" style="background: #ffd700; color: #000000; font-weight: bold; border: none; padding: 12px 16px; border-radius: 6px; cursor: pointer; width: 100%;">
+          ⚡ FUND ESCROW (1.0 Pi)
+      </button>
+  </div>
+
+  <!-- DEBUG LOG BOX -->
+  <div id="debug-log-box" style="background:#000; color:#0f0; padding:10px; font-family:monospace; font-size:12px; max-height:150px; overflow-y:auto; margin:20px 10px;">
+      [SYSTEM] $ Telemetry System Core initialized. Ready for ledger signature...
+  </div>
+
+  <footer style="margin-top: 30px; text-align: center; font-size: 0.8em; padding-bottom: 20px;">
+      <p style="color: #666;">© 2026 Vigilan Global Network Limited</p>
+      <a href="policies.html" style="color: #cca01a; text-decoration: none; margin: 0 10px;">Terms & Privacy Policy</a>
+  </footer>
+
+  <script>
+  // ---------- Auth ----------
+  document.getElementById('authBtn').addEventListener('click', async function () {
+    const gatewayStatus = document.getElementById('gatewayStatus');
+    try {
+      const scopes = ['username', 'payments'];
+      const auth = await window.Pi.authenticate(scopes, onIncompletePaymentFound);
+
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accessToken: auth.accessToken })
+      });
+      const result = await res.json();
+
+      if (result.success) {
+        setTimeout(() => {
+          document.getElementById('welcomeMsg').innerHTML =
+            `🛰️ Welcome back, operative <strong>@${result.user.username}</strong>. Regional telemetry synchronized cleanly.`;
+          logDebug("System Terminal fully loaded and active.");
+          loadDynamicTasks();               // was renderTaskFeed() — undefined
+        }, 1000);
+      } else {
+        gatewayStatus.innerText = "Authentication rejected.";
+        alert(`Authentication validation failed: ${result.error}`);
+        logDebug(`CRITICAL ERROR: Backend rejected validation. ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Handshake execution error:', error);
+      gatewayStatus.innerText = "Authorization error occurred.";
+      logDebug(`PROCESS ABORTED: ${error.message || 'User cancelled'}`);
+    }
+  });
+
+  async function apiPost(url, body) {
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const text = await r.text();
+  try { return JSON.parse(text); }
+  catch { throw new Error(`Non-JSON response from ${url} (HTTP ${r.status})`); }
+}
+
+
+  function onIncompletePaymentFound(payment) {
+    console.log('Stuck payment block captured during runtime:', payment);
+    logDebug(`WARN: Found incomplete ledger transaction ID: ${payment.identifier}`);
+  }
+
+  // ---------- Static escrow button ----------
+  const fundEscrowBtn = document.getElementById('fundEscrowBtn');
+  if (fundEscrowBtn) {
+    fundEscrowBtn.addEventListener('click', () => executePiPayment(1.0, "GIG-101"));
+  }
+
+  // ---------- Task loader (SINGLE definition) ----------
+  const FALLBACK_TASKS = [
+    { id: "DLV-0841", location: "Abuja HQ Perimeter", reward: 1.0, desc: "Verify NFC Gate Terminal signal." },
+    { id: "DLV-0842", location: "Sector 4 Relay Station", reward: 2.5, desc: "Audit biometric terminal telemetry sync." }
+  ];
+
+  async function loadDynamicTasks() {
+    const feed = document.getElementById('taskFeed');
+    if (!feed) return;
+    feed.innerHTML = '<p style="color:#666;">Syncing regional telemetry tasks...</p>';
+
+    try {
+      const response = await fetch('/api/tasks');
+      // Guard against HTML error pages (Live Server / 404) reaching .json()
+      const ct = response.headers.get('content-type') || '';
+      if (!response.ok || !ct.includes('application/json')) throw new Error(`Bad response ${response.status}`);
+
+      const data = await response.json();
+      renderTaskList(data.success && data.tasks?.length ? data.tasks : FALLBACK_TASKS);
+    } catch (err) {
+      console.warn("Task sync unavailable, using fallback:", err.message);
+      renderTaskList(FALLBACK_TASKS);
+    }
+  }
+
+  function renderTaskList(tasks) {
+    const feed = document.getElementById('taskFeed');
+    if (!feed) return;
+    feed.innerHTML = '';
+    updateTaskCountBadge(tasks.length);
+
+    tasks.forEach((task) => {
+      const card = document.createElement('div');
+      card.dataset.taskId = task.id;
+      card.style.cssText = "background:#111;border:1px solid #222;padding:12px;border-radius:8px;margin-bottom:12px;";
+      card.innerHTML = `
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:#888;">
+          <span>TASK #${task.id}</span>
+          <span style="color:#7b3fe4;">+${Number(task.reward).toFixed(2)} π</span>
+        </div>
+        <p style="margin:8px 0;color:#ddd;">📍 ${task.location} — ${task.desc}</p>
+        <div style="display:flex;gap:8px;">
+          <button class="fund-btn">⚡ FUND ESCROW</button>
+          <button class="verify-btn">🔍 VERIFY TASK</button>
+        </div>`;
+      // Listeners instead of inline onclick — avoids quoting/scope bugs
+      card.querySelector('.fund-btn').addEventListener('click', () => executePiPayment(Number(task.reward), task.id));
+      card.querySelector('.verify-btn').addEventListener('click', () => verifyTaskAction(task.id, task.reward));
+      feed.appendChild(card);
+    });
+  }
+
+  function updateTaskCountBadge(count) {
+    const badge = document.getElementById('taskCountIndicator');
+    if (badge) badge.innerText = `${count} Active`;
+  }
+
+  // ---------- Verify (orphaned block now INSIDE) ----------
+  function verifyTaskAction(taskId, reward) {
+    const numReward = parseFloat(reward) || 0;
+
+    const gigsEl = document.getElementById('statGigs');
+    if (gigsEl) gigsEl.innerText = (parseInt(gigsEl.innerText, 10) || 0) + 1;
+
+    const escrowEl = document.getElementById('statEscrow');
+    if (escrowEl) {
+      const current = parseFloat(escrowEl.innerText.replace(/[^0-9.]/g, '')) || 0;
+      escrowEl.innerText = `${(current + numReward).toFixed(2)} π`;
+    }
+
+    alert(`✅ Task #${taskId} Verified!\n\nReward: +${numReward.toFixed(2)} Pi credited.`);
+    logDebug(`Task #${taskId} verified. +${numReward.toFixed(2)} π`);
+
+    const card = document.querySelector(`[data-task-id="${taskId}"]`);
+    if (card) card.remove();
+  }
+
+  // ---------- Payments (URLs now match api/ filenames) ----------
+  window.executePiPayment = function (amount, taskId) {
+    const paymentData = {
+      amount: amount,
+      memo: `Escrow Deposit for Task #${taskId}`,
+      metadata: { gigId: taskId }
+    };
+
+    const paymentCallbacks = {
+      onReadyForServerApproval: async function (paymentId) {
+        logDebug(`Payment approval initialized for ID: ${paymentId}`);
+        try {
+          const r = await fetch('/api/approve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ paymentId })
+          });
+          console.log("Approval response:", await r.json());
+        } catch (err) {
+          console.error("Approval error:", err);
+          logDebug(`ERROR: Payment approval failed on server.`);
+        }
+      },
+      onReadyForServerCompletion: async function (paymentId, txid) {
+        logDebug(`Completing ledger entry for TxID: ${txid}`);
+        try {
+          await fetch('/api/complete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ paymentId, txid })
+          });
+          alert("Escrow Payment Completed!");
+          logDebug(`SUCCESS: Escrow ledger synchronized.`);
+        } catch (err) {
+          console.error("Completion error:", err);
+          logDebug(`ERROR: Payment completion sync failed.`);
+        }
+      },
+      onCancel: (paymentId) => logDebug(`NOTICE: Payment ${paymentId} cancelled by user.`),
+      onError: () => logDebug(`ERROR: Payment engine exception encountered.`)
+    };
+
+    if (typeof window !== 'undefined' && window.Pi) {
+      window.Pi.createPayment(paymentData, paymentCallbacks);
+    } else {
+      alert("Pi SDK not loaded. Please open in Pi Browser.");
+    }
+  };
+
+  document.addEventListener('DOMContentLoaded', loadDynamicTasks);
+</script>
+
+</body>
+</html>
