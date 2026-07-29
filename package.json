@@ -1,6 +1,8 @@
  {
   "name": "dlv-network",
   "version": "1.0.0",
+  "private": true,
+  "type": "module",
  "description": "DLV-Network Telemetry Systems",
   "scripts": {
   "vercel-build": "echo 'Skipping unnecessary frontend build step...'"
