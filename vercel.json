@@ -2,7 +2,7 @@
   "version": 2,
   "cleanUrls": true,
   "rewrites": [
-    
+    { "source": "/validation-key.txt", "destination": "/api/validation-key" },
     { "source": "/api/(.*)", "destination": "/api/$1" }
   ]
 }
