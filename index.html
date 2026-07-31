@@ -124,23 +124,33 @@ document.getElementById('piSignInBtn').addEventListener('click', async function 
       const result = await res.json();
 
       if (result.success) {
-        setTimeout(() => {
-          document.getElementById('welcomeMsg').innerHTML =
-            `🛰️ Welcome back, operative <strong>@${result.user.username}</strong>. Regional telemetry synchronized cleanly.`;
-          logDebug("System Terminal fully loaded and active.");
-          loadDynamicTasks();               // was renderTaskFeed() — undefined
-        }, 1000);
-      } else {
-        gatewayStatus.innerText = "Authentication rejected.";
-        alert(`Authentication validation failed: ${result.error}`);
-        logDebug(`CRITICAL ERROR: Backend rejected validation. ${result.error}`);
-      }
-    } catch (error) {
-      console.error('Handshake execution error:', error);
-      gatewayStatus.innerText = "Authorization error occurred.";
-      logDebug(`PROCESS ABORTED: ${error.message || 'User cancelled'}`);
+      setTimeout(() => {
+        // Safe check for welcomeMsg element
+        const welcomeEl = document.getElementById('welcomeMsg');
+        if (welcomeEl) {
+          welcomeEl.innerHTML = `🛰️ Welcome back, operative <strong>@${result.user.username}</strong>. Regional telemetry synchronized cleanly.`;
+        }
+        
+        // Hide the auth landing container safely
+        const authCard = document.getElementById('authCard') || 
+                         document.getElementById('landingScreen') || 
+                         document.querySelector('.auth-overlay');
+        if (authCard) {
+          authCard.style.display = 'none';
+        }
+
+        if (typeof logDebug === 'function') logDebug("System Terminal fully loaded and active.");
+        if (typeof loadDynamicTasks === 'function') loadDynamicTasks();
+      }, 500);
+    } else {
+      if (gatewayStatus) gatewayStatus.innerText = "Authentication rejected.";
+      alert(`Authentication validation failed: ${result.error}`);
     }
-  });
+  } catch (error) {
+    console.error('Handshake execution error:', error);
+    if (gatewayStatus) gatewayStatus.innerText = "Authorization error occurred.";
+  }
+});
 
   async function apiPost(url, body) {
   const r = await fetch(url, {
