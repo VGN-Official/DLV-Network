@@ -127,37 +127,69 @@ if (signInBtn) {
       
       const result = await res.json();
 
-    if (result.success) {
-        setTimeout(() => {
+    //if (result.success) {
+        //setTimeout(() => {
           // 1. Update the welcome text if present
-          const welcomeEl = document.getElementById('welcomeMsg');
-          if (welcomeEl) {
-            welcomeEl.innerHTML = `🛰️ Welcome back, operative <strong>@${result.user.username}</strong>. Regional telemetry synchronized cleanly.`;
-          }
+          //const welcomeEl = document.getElementById('welcomeMsg');
+          //if (welcomeEl) {
+            //welcomeEl.innerHTML = `🛰️ Welcome back, operative <strong>@${result.user.username}</strong>. Regional telemetry synchronized cleanly.`;
+          //}
 
           // 2. Hide the entire authentication container/overlay
+          //const overlay = document.getElementById('authOverlay') || 
+                //          document.getElementById('landingScreen') || 
+              //            document.getElementById('authCard') || 
+            //              document.querySelector('.auth-screen');
+
+          //if (overlay) {
+            //overlay.style.display = 'none';
+          //}
+
+          // 3. Ensure main app container is set to visible
+          //const mainApp = document.getElementById('mainApp') || document.getElementById('dashboard');
+          //if (mainApp) {
+            //mainApp.style.display = 'block';
+          //}
+
+          //if (typeof logDebug === 'function') logDebug("System Terminal fully loaded and active.");
+          //if (typeof loadDynamicTasks === 'function') loadDynamicTasks();
+        //}, 300);
+      //} else {
+        //if (gatewayStatus) gatewayStatus.innerText = "Authentication rejected.";
+        //alert(`Authentication validation failed: ${result.error || 'Unknown server error'}`);
+      //}
+      console.warn("=== AUTH HANDSHAKE STARTED ===");
+
+    if (typeof result === 'undefined') {
+      alert("DIAGNOSTIC: 'result' variable is undefined!");
+    } else {
+      console.log("Auth Result Data:", result);
+
+      if (result && result.success) {
+        alert("DIAGNOSTIC Step 1: result.success is TRUE. Timer starting...");
+        
+        setTimeout(() => {
+          alert("DIAGNOSTIC Step 2: Inside 300ms setTimeout.");
+
           const overlay = document.getElementById('authOverlay') || 
                           document.getElementById('landingScreen') || 
                           document.getElementById('authCard') || 
                           document.querySelector('.auth-screen');
 
-          if (overlay) {
-            overlay.style.display = 'none';
-          }
+          const mainApp = document.getElementById('mainApp') || 
+                          document.getElementById('dashboard');
 
-          // 3. Ensure main app container is set to visible
-          const mainApp = document.getElementById('mainApp') || document.getElementById('dashboard');
-          if (mainApp) {
-            mainApp.style.display = 'block';
-          }
+          alert(`DIAGNOSTIC Step 3: Elements Found -> overlay: ${!!overlay}, mainApp: ${!!mainApp}`);
 
-          if (typeof logDebug === 'function') logDebug("System Terminal fully loaded and active.");
-          if (typeof loadDynamicTasks === 'function') loadDynamicTasks();
+          if (overlay) overlay.style.display = 'none';
+          if (mainApp) mainApp.style.display = 'block';
+
         }, 300);
       } else {
-        if (gatewayStatus) gatewayStatus.innerText = "Authentication rejected.";
-        alert(`Authentication validation failed: ${result.error || 'Unknown server error'}`);
+        alert(`DIAGNOSTIC FAIL: result.success was false or missing. Error: ${result ? result.error : 'No result object'}`);
       }
+    }
+
     } catch (error) {
       console.error('Handshake execution error:', error);
       if (gatewayStatus) gatewayStatus.innerText = "Authorization error occurred.";
