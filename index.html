@@ -158,7 +158,7 @@ if (signInBtn) {
         //if (gatewayStatus) gatewayStatus.innerText = "Authentication rejected.";
         //alert(`Authentication validation failed: ${result.error || 'Unknown server error'}`);
       //}
-      console.warn("=== AUTH HANDSHAKE STARTED ===");
+     console.warn("=== AUTH HANDSHAKE STARTED ===");
 
     if (typeof result === 'undefined') {
       alert("DIAGNOSTIC: 'result' variable is undefined!");
@@ -166,36 +166,52 @@ if (signInBtn) {
       console.log("Auth Result Data:", result);
 
       if (result && result.success) {
-        alert("DIAGNOSTIC Step 1: result.success is TRUE. Timer starting...");
-        
-        setTimeout(() => {
-          alert("DIAGNOSTIC Step 2: Inside 300ms setTimeout.");
 
-          const overlay = document.getElementById('authOverlay') || 
-                          document.getElementById('landingScreen') || 
-                          document.getElementById('authCard') || 
-                          document.querySelector('.auth-screen');
+        // ==========================================
+        // REPLACE FROM HERE:
+        // ==========================================
 
-          const mainApp = document.getElementById('mainApp') || 
-                          document.getElementById('dashboard');
+        // 1. Hide the button's parent section immediately
+        const btn = document.getElementById('piSignInBtn');
+        if (btn) {
+          // Walk up to find the landing container card/section and hide it
+          const landingWrapper = btn.closest('section') || btn.closest('div') || btn.parentElement;
+          if (landingWrapper) {
+            landingWrapper.style.display = 'none';
+          }
+        }
 
-          alert(`DIAGNOSTIC Step 3: Elements Found -> overlay: ${!!overlay}, mainApp: ${!!mainApp}`);
+        // 2. Unhide main app components if hidden by class/ID
+        const appViews = document.querySelectorAll('.app-content, #mainApp, #dashboard, .dashboard-container');
+        appViews.forEach(view => {
+          view.style.display = 'block';
+        });
 
-          if (overlay) overlay.style.display = 'none';
-          if (mainApp) mainApp.style.display = 'block';
+        // 3. Update welcome banner text safely
+        const welcomeEl = document.getElementById('welcomeMsg');
+        if (welcomeEl) {
+          welcomeEl.innerHTML = `🛰️ Welcome back, operative <strong>@${result.user.username}</strong>. Regional telemetry synchronized cleanly.`;
+        }
 
-        }, 300);
+        // 4. Trigger task feed initialization
+        if (typeof logDebug === 'function') logDebug("System Terminal fully loaded and active.");
+        if (typeof loadDynamicTasks === 'function') loadDynamicTasks();
+
+        // ==========================================
+        // UNTIL HERE.
+        // ==========================================
+
       } else {
         alert(`DIAGNOSTIC FAIL: result.success was false or missing. Error: ${result ? result.error : 'No result object'}`);
       }
     }
 
-    } catch (error) {
-      console.error('Handshake execution error:', error);
-      if (gatewayStatus) gatewayStatus.innerText = "Authorization error occurred.";
-      alert(`Pi Auth Exception: ${error.message || error}`);
-    }
-  });
+  } catch (error) {
+    console.error('Handshake execution error:', error);
+    if (gatewayStatus) gatewayStatus.innerText = "Authorization error occurred.";
+    alert(`Pi Auth Exception: ${error.message || error}`);
+  }
+});
 }
 
 // ---------- Helper API POST ----------
