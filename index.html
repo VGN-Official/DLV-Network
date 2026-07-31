@@ -81,9 +81,29 @@
   </footer>
 
   <script>
+
+    // 1. Initialize Pi SDK (Required before authenticate can run)
+if (window.Pi) {
+  window.Pi.init({ version: "2.0", sandbox: true });
+}
+
+// 2. Define the payment callback handler
+function onIncompletePaymentFound(payment) {
+  console.log("Incomplete payment detected:", payment);
+  // Handle server-side resolution if necessary
+}
+
+// ---------- Auth ----------
+document.getElementById('authBtn').addEventListener('click', async function () {
+  const gatewayStatus = document.getElementById('gatewayStatus');
+  
+  if (!window.Pi) {
+    alert("Pi SDK not loaded. Please make sure you are opening this app inside the Pi Browser!");
+    return;
+  }
   // ---------- Auth ----------
-  document.getElementById('authBtn').addEventListener('click', async function () {
-    const gatewayStatus = document.getElementById('gatewayStatus');
+  //document.getElementById('authBtn').addEventListener('click', async function () {
+   //const gatewayStatus = document.getElementById('gatewayStatus');
     try {
       const scopes = ['username', 'payments'];
       const auth = await window.Pi.authenticate(scopes, onIncompletePaymentFound);
