@@ -9,6 +9,14 @@
     
     <!-- Pi SDK -->
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+
+  <script>
+  window.onerror = function (msg, url, lineNo, columnNo, error) {
+    alert("CRITICAL SCRIPT ERROR:\n" + msg + "\nAt line: " + lineNo + "\nURL: " + url);
+    return false;
+  };
+</script>
+
 </head>
 <body style="margin: 0; background-color: #121212; color: #ffffff;">
 
@@ -94,7 +102,7 @@ function onIncompletePaymentFound(payment) {
 }
 
 // ---------- Auth ----------
-document.getElementById('authBtn').addEventListener('click', async function () {
+document.getElementById('piSignInBtn').addEventListener('click', async function () {
   const gatewayStatus = document.getElementById('gatewayStatus');
   
   if (!window.Pi) {
