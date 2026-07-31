@@ -127,32 +127,41 @@ if (signInBtn) {
       
       const result = await res.json();
 
-      if (result.success) {
+    if (result.success) {
         setTimeout(() => {
-          // Safe check for welcomeMsg element
+          // 1. Update the welcome text if present
           const welcomeEl = document.getElementById('welcomeMsg');
           if (welcomeEl) {
             welcomeEl.innerHTML = `🛰️ Welcome back, operative <strong>@${result.user.username}</strong>. Regional telemetry synchronized cleanly.`;
           }
-          
-          // Hide the auth landing container safely
-          const authCard = document.getElementById('authCard') || 
-                           document.getElementById('landingScreen') || 
-                           document.querySelector('.auth-overlay');
-          if (authCard) {
-            authCard.style.display = 'none';
+
+          // 2. Hide the entire authentication container/overlay
+          const overlay = document.getElementById('authOverlay') || 
+                          document.getElementById('landingScreen') || 
+                          document.getElementById('authCard') || 
+                          document.querySelector('.auth-screen');
+
+          if (overlay) {
+            overlay.style.display = 'none';
+          }
+
+          // 3. Ensure main app container is set to visible
+          const mainApp = document.getElementById('mainApp') || document.getElementById('dashboard');
+          if (mainApp) {
+            mainApp.style.display = 'block';
           }
 
           if (typeof logDebug === 'function') logDebug("System Terminal fully loaded and active.");
           if (typeof loadDynamicTasks === 'function') loadDynamicTasks();
-        }, 500);
+        }, 300);
       } else {
         if (gatewayStatus) gatewayStatus.innerText = "Authentication rejected.";
-        alert(`Authentication validation failed: ${result.error}`);
+        alert(`Authentication validation failed: ${result.error || 'Unknown server error'}`);
       }
     } catch (error) {
       console.error('Handshake execution error:', error);
       if (gatewayStatus) gatewayStatus.innerText = "Authorization error occurred.";
+      alert(`Pi Auth Exception: ${error.message || error}`);
     }
   });
 }
